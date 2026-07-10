@@ -1,3 +1,4 @@
+from typing import cast
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -6,55 +7,10 @@ from app.modules.tenant.models import TenantUser
 from app.modules.user.models import User
 
 
+
 class UserRepository:
     def __init__(self, db: Session):
         self.db = db
-
-
-def list_users_by_tenant(
-    self,
-    tenant_id: int,
-    skip: int = 0,
-    limit: int = 20,
-    search: str | None = None,
-) -> tuple[list[tuple[User, TenantUser, Role]], int]:
-    query = (
-        self.db.query(User, TenantUser, Role)
-        .join(
-            TenantUser,
-            TenantUser.user_id == User.id,
-        )
-        .join(
-            Role,
-            Role.id == TenantUser.role_id,
-        )
-        .filter(
-            TenantUser.tenant_id == tenant_id,
-        )
-    )
-
-    if search:
-        search_value = f"%{search.strip()}%"
-
-        query = query.filter(
-            or_(
-                User.first_name.ilike(search_value),
-                User.last_name.ilike(search_value),
-                User.email.ilike(search_value),
-                Role.name.ilike(search_value),
-            )
-        )
-
-    total = query.count()
-
-    records = (
-        query.order_by(User.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-
-    return records, total
 
     # ---------------------------------------------------------
     # User queries
@@ -77,8 +33,55 @@ def list_users_by_tenant(
     def create_user(self, user: User) -> User:
         self.db.add(user)
         self.db.flush()
-
         return user
+
+    def list_users_by_tenant(
+        self,
+        tenant_id: int,
+        skip: int = 0,
+        limit: int = 20,
+        search: str | None = None,
+    ) -> tuple[list[tuple[User, TenantUser, Role]], int]:
+        query = (
+            self.db.query(User, TenantUser, Role)
+            .join(
+                TenantUser,
+                TenantUser.user_id == User.id,
+            )
+            .join(
+                Role,
+                Role.id == TenantUser.role_id,
+            )
+            .filter(
+                TenantUser.tenant_id == tenant_id,
+            )
+        )
+
+        if search:
+            search_value = f"%{search.strip()}%"
+
+            query = query.filter(
+                or_(
+                    User.first_name.ilike(search_value),
+                    User.last_name.ilike(search_value),
+                    User.email.ilike(search_value),
+                    Role.name.ilike(search_value),
+                )
+            )
+
+        total = query.count()
+
+        records = cast(
+        list[tuple[User, TenantUser, Role]],
+    (
+        query.order_by(User.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    ),
+)
+
+        return records, total
 
     # ---------------------------------------------------------
     # Role queries
