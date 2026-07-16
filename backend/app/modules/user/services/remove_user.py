@@ -1,19 +1,16 @@
 from fastapi import HTTPException, status
 
-from app.core.security import hash_password
 from app.modules.auth.schemas import CurrentUserResponse
 from app.modules.user.repositories.user_repository import UserRepository
-from app.modules.user.schemas import ResetUserPasswordRequest
 
 
-class ResetUserPasswordService:
+class RemoveUserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def reset_password(
+    def remove_user(
         self,
         user_id: int,
-        request: ResetUserPasswordRequest,
         current_user: CurrentUserResponse,
     ) -> dict[str, str]:
         record = self.repository.get_user_by_id_and_tenant(
@@ -32,27 +29,15 @@ class ResetUserPasswordService:
         if user.id == current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Use the change-password feature to update your own password",
-            )
-
-        if not tenant_user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot reset the password of an inactive user",
+                detail="You cannot remove your own tenant membership",
             )
 
         try:
-            password_hash = hash_password(request.new_password)
-
-            self.repository.update_user_password(
-                user=user,
-                password_hash=password_hash,
-            )
-
+            self.repository.delete_tenant_user(tenant_user)
             self.repository.commit()
 
             return {
-                "message": "User password reset successfully",
+                "message": "User removed from tenant successfully",
             }
 
         except HTTPException:
@@ -64,5 +49,5 @@ class ResetUserPasswordService:
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Password reset failed: {str(exc)}",
+                detail=f"User removal failed: {str(exc)}",
             ) from exc

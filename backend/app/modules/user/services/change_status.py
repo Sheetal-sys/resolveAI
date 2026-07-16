@@ -2,17 +2,17 @@ from fastapi import HTTPException, status
 
 from app.modules.auth.schemas import CurrentUserResponse
 from app.modules.user.repositories.user_repository import UserRepository
-from app.modules.user.schemas import UserResponse, UserUpdateRequest
+from app.modules.user.schemas import ChangeUserStatusRequest, UserResponse
 
 
-class UpdateUserService:
+class ChangeUserStatusService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def update_user(
+    def change_status(
         self,
         user_id: int,
-        request: UserUpdateRequest,
+        request: ChangeUserStatusRequest,
         current_user: CurrentUserResponse,
     ) -> UserResponse:
         record = self.repository.get_user_by_id_and_tenant(
@@ -28,44 +28,28 @@ class UpdateUserService:
 
         user, tenant_user, role = record
 
-        update_data = request.model_dump(exclude_unset=True)
-
-        if not update_data:
+        if user.id == current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields were provided for update",
+                detail="You cannot change your own account status",
             )
 
-        if "email" in update_data:
-            normalized_email = str(update_data["email"]).lower().strip()
+        if tenant_user.is_active == request.is_active:
+            current_status = "active" if request.is_active else "inactive"
 
-            existing_user = self.repository.get_user_by_email(
-                normalized_email
-            )
-
-            if existing_user and existing_user.id != user.id:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="A user with this email already exists",
-                )
-
-            user.email = normalized_email
-
-        if "first_name" in update_data:
-            user.first_name = update_data["first_name"].strip()
-
-        if "last_name" in update_data:
-            last_name = update_data["last_name"]
-            user.last_name = (
-                last_name.strip()
-                if last_name
-                else None
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User is already {current_status}",
             )
 
         try:
-            user = self.repository.update_user(user)
+            tenant_user = self.repository.update_tenant_user_status(
+                tenant_user=tenant_user,
+                is_active=request.is_active,
+            )
+
             self.repository.commit()
-            self.repository.refresh(user)
+            self.repository.refresh(tenant_user)
 
             return UserResponse(
                 user_id=user.id,
@@ -87,5 +71,5 @@ class UpdateUserService:
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"User update failed: {str(exc)}",
+                detail=f"User status update failed: {str(exc)}",
             ) from exc

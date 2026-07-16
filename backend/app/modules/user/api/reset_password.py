@@ -5,34 +5,26 @@ from app.database.db import get_db
 from app.modules.auth.dependencies import require_roles
 from app.modules.auth.schemas import CurrentUserResponse
 from app.modules.user.repositories.user_repository import UserRepository
-from app.modules.user.schemas import UserResponse, UserUpdateRequest
-from app.modules.user.services.update_user import UpdateUserService
+from app.modules.user.schemas import ResetUserPasswordRequest
+from app.modules.user.services.reset_password import ResetUserPasswordService
 from app.shared.base.enums import RoleName
 
 router = APIRouter()
 
 
-@router.patch(
-    "/{user_id}",
-    response_model=UserResponse,
-)
-def update_user(
+@router.post("/{user_id}/reset-password")
+def reset_user_password(
     user_id: int,
-    request: UserUpdateRequest,
+    request: ResetUserPasswordRequest,
     db: Session = Depends(get_db),
     current_user: CurrentUserResponse = Depends(
-        require_roles(
-            [
-                RoleName.TENANT_ADMIN.value,
-                RoleName.SUPERVISOR.value,
-            ]
-        )
+        require_roles([RoleName.TENANT_ADMIN.value])
     ),
 ):
     repository = UserRepository(db)
-    service = UpdateUserService(repository)
+    service = ResetUserPasswordService(repository)
 
-    return service.update_user(
+    return service.reset_password(
         user_id=user_id,
         request=request,
         current_user=current_user,

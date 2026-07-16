@@ -1,11 +1,10 @@
 from typing import cast
+
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-
 from app.modules.role.models import Role
 from app.modules.tenant.models import TenantUser
 from app.modules.user.models import User
-
 
 
 class UserRepository:
@@ -42,6 +41,7 @@ class UserRepository:
         limit: int = 20,
         search: str | None = None,
     ) -> tuple[list[tuple[User, TenantUser, Role]], int]:
+
         query = (
             self.db.query(User, TenantUser, Role)
             .join(
@@ -72,18 +72,66 @@ class UserRepository:
         total = query.count()
 
         records = cast(
-        list[tuple[User, TenantUser, Role]],
-    (
-        query.order_by(User.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    ),
-)
+            list[tuple[User, TenantUser, Role]],
+            (
+                query.order_by(User.created_at.desc())
+                .offset(skip)
+                .limit(limit)
+                .all()
+            ),
+        )
 
         return records, total
 
-    # ---------------------------------------------------------
+    def get_user_by_id_and_tenant(
+        self,
+        user_id: int,
+        tenant_id: int,
+    ) -> tuple[User, TenantUser, Role] | None:
+        record = (
+        self.db.query(User, TenantUser, Role)
+        .join(
+            TenantUser,
+            TenantUser.user_id == User.id,
+        )
+        .join(
+            Role,
+            Role.id == TenantUser.role_id,
+        )
+        .filter(
+            User.id == user_id,
+            TenantUser.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+        return cast(
+        tuple[User, TenantUser, Role] | None,
+        record,
+    )
+    def update_user(
+       self,
+       user: User,
+    ) -> User:
+        self.db.add(user)
+        self.db.flush()
+
+        return user
+ 
+    def update_user_password(
+        self,
+        user: User,
+        password_hash: str,
+    ) -> User:
+      user.password_hash = password_hash
+
+      self.db.add(user)
+      self.db.flush()
+
+      return user
+    
+    
+    # -------------------------------------------------
     # Role queries
     # ---------------------------------------------------------
 
@@ -111,6 +159,29 @@ class UserRepository:
             )
             .first()
         )
+    
+    def update_tenant_user_role(
+        self,
+        tenant_user: TenantUser,
+        role_id: int,
+    ) -> TenantUser:
+         tenant_user.role_id = role_id
+         self.db.add(tenant_user)
+         self.db.flush()
+
+         return tenant_user
+    
+    def update_tenant_user_status(
+        self,
+        tenant_user: TenantUser,
+        is_active: bool,
+    ) -> TenantUser:
+         tenant_user.is_active = is_active
+
+         self.db.add(tenant_user)
+         self.db.flush()
+
+         return tenant_user
 
     def create_tenant_user(
         self,
@@ -130,6 +201,14 @@ class UserRepository:
 
         return tenant_user
 
+
+    def delete_tenant_user(
+        self,
+        tenant_user: TenantUser,
+    ) -> None:
+        self.db.delete(tenant_user)
+        self.db.flush()
+        
     # ---------------------------------------------------------
     # Transaction handling
     # ---------------------------------------------------------

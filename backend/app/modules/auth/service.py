@@ -30,6 +30,22 @@ class AuthService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User account is inactive",
             )
+        
+        tenant_role_data = self.repository.get_user_tenant_role(user.id)
+
+        if not tenant_role_data:
+         raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="User is not assigned to an active tenant",
+    )
+
+        tenant_user, tenant, role = tenant_role_data
+
+        if not tenant_user.is_active:
+         raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Your tenant membership is inactive",
+    )
 
         access_token = create_access_token(
             data={
@@ -79,6 +95,12 @@ class AuthService:
             )
 
         tenant_user, tenant, role = tenant_role_data
+
+        if not tenant_user.is_active:
+         raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Your tenant membership is inactive",
+    )
 
         return CurrentUserResponse(
             user_id=user.id,
