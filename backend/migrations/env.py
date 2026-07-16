@@ -9,6 +9,7 @@ from app.database.db import Base
 # Import every model so SQLAlchemy registers all tables in Base.metadata.
 from app.modules.role.models import Role
 from app.modules.tenant.models import Tenant, TenantUser
+from app.modules.tenant_settings.models import TenantSettings
 from app.modules.user.models import User
 
 config = context.config
