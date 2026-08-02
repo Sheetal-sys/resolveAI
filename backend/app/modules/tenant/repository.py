@@ -83,3 +83,13 @@ class TenantRepository:
 
     def rollback(self):
         self.db.rollback()
+
+    def get_tenant_by_id(
+    self,
+    tenant_id: int,
+    ) -> Tenant | None:
+     return (
+        self.db.query(Tenant)
+        .filter(Tenant.id == tenant_id)
+        .first()
+    )    

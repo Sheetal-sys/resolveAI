@@ -1,12 +1,48 @@
-__pycache__/
-*.pyc
+# Environment variables and secrets
 .env
-venv/
+.env.*
+!.env.example
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test and tooling cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
 .venv/
-node_modules/
-dist/
-build/
-*.db
-*.sqlite3
+venv/
+env/
+ENV/
+
+# IDE settings
 .vscode/
 .idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.bak
+
+# Frontend files
+node_modules/
+.next/
+out/

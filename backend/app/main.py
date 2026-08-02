@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from app.modules.auth.api import router as auth_router
 from app.modules.tenant.api import router as tenant_router
 from app.modules.user.api import router as user_router
+from app.modules.tenant_settings.api import (
+    router as tenant_settings_router,
+)
 
 app = FastAPI(
     title="ResolveAI API",
@@ -27,3 +30,8 @@ def health_check():
     return {
         "status": "healthy",
     }
+
+app.include_router(
+    tenant_settings_router,
+    prefix="/api/v1",
+)
