@@ -7,6 +7,7 @@ from app.modules.tenant_settings.api import (
     router as tenant_settings_router,
 )
 from app.modules.customer.api import router as customer_router
+from app.modules.products.api import router as product_router
 
 app = FastAPI(
     title="ResolveAI API",
@@ -18,6 +19,7 @@ app.include_router(tenant_router)
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(customer_router)
+app.include_router(product_router)
 
 @app.get("/")
 def root():

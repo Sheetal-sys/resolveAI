@@ -2,6 +2,7 @@ from app.modules.role.models import Role
 from app.modules.tenant.models import Tenant, TenantUser
 from app.modules.tenant_settings.models import TenantSettings
 from app.modules.user.models import User
+from app.modules.products.models import Product
 
 
 def test_database_table_names() -> None:
@@ -10,3 +11,4 @@ def test_database_table_names() -> None:
     assert Tenant.__tablename__ == "tenants"
     assert TenantUser.__tablename__ == "tenant_users"
     assert TenantSettings.__tablename__ == "tenant_settings"
+    assert Product.__tablename__ == "products"
