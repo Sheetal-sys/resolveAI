@@ -19,3 +19,17 @@ class RoleName(str, Enum):
     SUPERVISOR = "SUPERVISOR"
     SUPPORT_AGENT = "SUPPORT_AGENT"
     CUSTOMER = "CUSTOMER"
+
+class CustomerStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    BLOCKED = "BLOCKED"
+
+
+class CustomerSource(str, Enum):
+    WEBSITE = "WEBSITE"
+    MOBILE_APP = "MOBILE_APP"
+    EMAIL = "EMAIL"
+    PHONE = "PHONE"
+    API = "API"
+    IMPORT = "IMPORT"    

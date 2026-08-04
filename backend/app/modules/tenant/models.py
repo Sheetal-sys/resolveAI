@@ -14,12 +14,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.db import Base
 from app.shared.base.enums import SubscriptionPlan, TenantStatus
 from app.shared.base.models import TimestampMixin
+from app.modules.customer.models import Customer
 
 if TYPE_CHECKING:
+    from app.modules.customer.models import Customer
     from app.modules.role.models import Role
     from app.modules.tenant_settings.models import TenantSettings
     from app.modules.user.models import User
-
 
 class Tenant(Base, TimestampMixin):
     __tablename__ = "tenants"
@@ -59,6 +60,13 @@ class Tenant(Base, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+
+    customers: Mapped[list["Customer"]] = relationship(
+        "Customer",
+         back_populates="tenant",
+         cascade="all, delete-orphan",
+         passive_deletes=True,
     )
 
 
