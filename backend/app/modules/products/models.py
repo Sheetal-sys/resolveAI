@@ -15,6 +15,7 @@ from app.database.db import Base
 from app.shared.base.models import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.modules.orders.models import OrderItem
     from app.modules.tenant.models import Tenant
 
 
@@ -106,4 +107,9 @@ class Product(Base, TimestampMixin):
     tenant: Mapped["Tenant"] = relationship(
         "Tenant",
         back_populates="products",
+    )
+
+    order_items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="product",
     )

@@ -17,6 +17,7 @@ from app.shared.base.models import TimestampMixin
 
 if TYPE_CHECKING:
     from app.modules.customer.models import Customer
+    from app.modules.orders.models import Order
     from app.modules.products.models import Product
     from app.modules.role.models import Role
     from app.modules.tenant_settings.models import TenantSettings
@@ -72,6 +73,13 @@ class Tenant(Base, TimestampMixin):
 
     products: Mapped[list["Product"]] = relationship(
         "Product",
+        back_populates="tenant",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
         back_populates="tenant",
         cascade="all, delete-orphan",
         passive_deletes=True,

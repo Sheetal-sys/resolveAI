@@ -20,6 +20,7 @@ class RoleName(str, Enum):
     SUPPORT_AGENT = "SUPPORT_AGENT"
     CUSTOMER = "CUSTOMER"
 
+
 class CustomerStatus(str, Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -32,4 +33,13 @@ class CustomerSource(str, Enum):
     EMAIL = "EMAIL"
     PHONE = "PHONE"
     API = "API"
-    IMPORT = "IMPORT"    
+    IMPORT = "IMPORT"
+
+
+class OrderStatus(str, Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    PROCESSING = "PROCESSING"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"

@@ -16,6 +16,7 @@ from sqlalchemy import (
 )
 
 if TYPE_CHECKING:
+    from app.modules.orders.models import Order
     from app.modules.tenant.models import Tenant
 
 
@@ -89,6 +90,13 @@ class Customer(Base, TimestampMixin):
     tenant: Mapped["Tenant"] = relationship(
         "Tenant",
         back_populates="customers",
+    )
+
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     __table_args__ = (
