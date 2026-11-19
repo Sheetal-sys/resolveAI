@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
+import logging
 
 from app.modules.auth.schemas import CurrentUserResponse
 from app.modules.orders.repository import OrderRepository
 from app.modules.orders.schemas import ChangeOrderStatusRequest, OrderResponse
 from app.shared.base.enums import OrderStatus
 
+logger = logging.getLogger(__name__)
 
 # Define valid forward transitions only
 _VALID_TRANSITIONS: dict[str, set[str]] = {
@@ -81,10 +83,11 @@ class ChangeOrderStatusService:
             self.repository.rollback()
             raise
 
-        except Exception as exc:
-            self.repository.rollback()
+        except Exception:
+         self.repository.rollback()
+         logger.exception("Unexpected error while changing order status")
 
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Order status change failed: {str(exc)}",
-            ) from exc
+        raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="An internal error occurred while changing order status",
+        )

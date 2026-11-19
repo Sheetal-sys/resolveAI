@@ -46,6 +46,7 @@ from app.modules.tenant.models import Tenant, TenantUser  # noqa: E402, F401
 from app.modules.tenant_settings.models import TenantSettings  # noqa: E402, F401
 from app.modules.user.models import User  # noqa: E402, F401
 from app.modules.products.models import Product  # noqa: E402, F401
+from app.modules.orders.models import Order, OrderItem  # noqa: E402, F401
 
 from tests.fixtures.auth import (  # noqa: E402, F401
     second_tenant_admin_context,

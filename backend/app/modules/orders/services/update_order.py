@@ -1,3 +1,5 @@
+
+import logging
 from decimal import Decimal
 
 from fastapi import HTTPException, status
@@ -7,6 +9,8 @@ from app.modules.orders.repository import OrderRepository
 from app.modules.orders.schemas import OrderResponse, OrderUpdateRequest
 from app.shared.base.enums import OrderStatus
 
+
+logger = logging.getLogger(__name__)
 
 # Orders that have been shipped or completed cannot be financially edited
 _LOCKED_STATUSES = {
@@ -26,6 +30,7 @@ class UpdateOrderService:
         request: OrderUpdateRequest,
         current_user: CurrentUserResponse,
     ) -> OrderResponse:
+
         order = self.repository.get_by_id_and_tenant(
             order_id=order_id,
             tenant_id=current_user.tenant_id,
@@ -40,9 +45,7 @@ class UpdateOrderService:
         if order.status in _LOCKED_STATUSES:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"Order cannot be updated in status '{order.status}'"
-                ),
+                detail=f"Order cannot be updated in status '{order.status}'",
             )
 
         update_data = request.model_dump(exclude_unset=True)
@@ -53,27 +56,36 @@ class UpdateOrderService:
                 detail="No fields were provided for update",
             )
 
-        if "currency" in update_data:
-            order.currency = update_data["currency"].upper().strip()
-
-        if "tax_amount" in update_data:
-            order.tax_amount = update_data["tax_amount"]
-
-        if "shipping_amount" in update_data:
-            order.shipping_amount = update_data["shipping_amount"]
-
-        if "discount_amount" in update_data:
-            order.discount_amount = update_data["discount_amount"]
-
-        # Recalculate total after adjustments
-        order.total_amount = (
-            order.subtotal
-            + order.tax_amount
-            + order.shipping_amount
-            - order.discount_amount
-        ).quantize(Decimal("0.01"))
-
         try:
+            if "currency" in update_data:
+                order.currency = update_data["currency"].upper().strip()
+
+            if "tax_amount" in update_data:
+                order.tax_amount = update_data["tax_amount"]
+
+            if "shipping_amount" in update_data:
+                order.shipping_amount = update_data["shipping_amount"]
+
+            if "discount_amount" in update_data:
+                order.discount_amount = update_data["discount_amount"]
+
+            # Recalculate total after adjustments
+            order.total_amount = (
+                order.subtotal
+                + order.tax_amount
+                + order.shipping_amount
+                - order.discount_amount
+            ).quantize(Decimal("0.01"))
+
+            if order.total_amount < Decimal("0.00"):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=(
+                        "Discount cannot exceed the order subtotal "
+                        "plus tax and shipping"
+                    ),
+                )
+
             self.repository.update(order)
             self.repository.commit()
             self.repository.refresh(order)
@@ -84,10 +96,11 @@ class UpdateOrderService:
             self.repository.rollback()
             raise
 
-        except Exception as exc:
+        except Exception:
             self.repository.rollback()
+            logger.exception("Unexpected error while updating order")
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Order update failed: {str(exc)}",
-            ) from exc
+                detail="An internal error occurred while updating the order",
+            )

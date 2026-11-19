@@ -1,4 +1,7 @@
 from decimal import Decimal
+from uuid import uuid4
+import logging
+
 
 from fastapi import HTTPException, status
 
@@ -10,6 +13,7 @@ from app.modules.orders.schemas import OrderCreateRequest, OrderResponse
 from app.modules.products.repository import ProductRepository
 from app.shared.base.enums import OrderStatus
 
+logger = logging.getLogger(__name__)
 
 class CreateOrderService:
     def __init__(
@@ -65,7 +69,7 @@ class CreateOrderService:
             order = Order(
                 tenant_id=tenant_id,
                 customer_id=request.customer_id,
-                order_number="TEMP",
+                order_number=f"TMP-{uuid4().hex[:20].upper()}",
                 status=OrderStatus.PENDING.value,
                 currency=request.currency.upper().strip(),
                 subtotal=Decimal("0.00"),
@@ -111,6 +115,19 @@ class CreateOrderService:
                 - request.discount_amount
             ).quantize(Decimal("0.01"))
 
+            if total_amount < Decimal("0.00"):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=(
+                        "Discount cannot exceed the order subtotal "
+                        "plus tax and shipping"
+                    ),
+                )
+                raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail="Discount cannot exceed the order subtotal plus tax and shipping",
+            )
+
             order.subtotal = subtotal
             order.total_amount = total_amount
             self.order_repository.update(order)
@@ -124,10 +141,11 @@ class CreateOrderService:
             self.order_repository.rollback()
             raise
 
-        except Exception as exc:
+        except Exception:
             self.order_repository.rollback()
+            logger.exception("Unexpected error while creating order")
 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Order creation failed: {str(exc)}",
-            ) from exc
+                detail="An internal error occurred while creating the order",
+            )

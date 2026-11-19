@@ -18,6 +18,7 @@ from app.modules.tenant.models import Tenant, TenantUser
 from app.modules.tenant_settings.models import TenantSettings
 from app.modules.customer.models import Customer
 from app.modules.products.models import Product
+from app.modules.orders.models import Order, OrderItem
 
 # ---------------------------------------------------------
 
